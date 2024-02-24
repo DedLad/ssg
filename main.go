@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io/ioutil"
+
+	// "io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -69,7 +70,7 @@ func generateSite(inputDir, outputDir, templatePath string) error {
 
 		// Read markdown content
 		mdPath := filepath.Join(inputDir, file.Name())
-		mdContent, err := ioutil.ReadFile(mdPath)
+		mdContent, err := os.ReadFile(mdPath)
 		if err != nil {
 			return err
 		}

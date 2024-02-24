@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 
 	// "io/ioutil"
 	"log"
@@ -11,14 +12,101 @@ import (
 	"os"
 	"path/filepath"
 
+	"strings"
+
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/renderer/html"
+	"gopkg.in/yaml.v2"
 )
 
 // Page represents a single page of the website.
 type Page struct {
 	Title string
 	Body  template.HTML
+}
+
+// FrontMatter represents the front matter of a markdown file.
+type FrontMatter struct {
+	Title string `yaml:"title"`
+}
+
+// parseFrontMatter parses the front matter of a markdown file.
+func parseFrontMatter(content []byte) (*FrontMatter, error) {
+	fm := &FrontMatter{}
+	err := yaml.Unmarshal(content, fm)
+	if err != nil {
+		return nil, err
+	}
+	return fm, nil
+}
+
+// generateFrontMatterFile generates a YAML file containing the front matter.
+func generateFrontMatterFile(fm *FrontMatter, outputPath string) error {
+	data, err := yaml.Marshal(fm)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(outputPath, data, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// generateSite generates HTML files for all markdown files in the input directory.
+func generateSite(inputDir, outputDir, templatePath string) error {
+	// Read all markdown files from input directory
+	files, err := ioutil.ReadDir(inputDir)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		if file.IsDir() || filepath.Ext(file.Name()) != ".md" {
+			continue
+		}
+
+		// Read markdown content
+		mdPath := filepath.Join(inputDir, file.Name())
+		mdContent, err := ioutil.ReadFile(mdPath)
+		if err != nil {
+			return err
+		}
+
+		// Parse front matter
+		fm, err := parseFrontMatter(mdContent)
+		if err != nil {
+			return err
+		}
+
+		// Set default title if empty
+		if fm.Title == "" {
+			fm.Title = strings.TrimSuffix(file.Name(), ".md")
+		}
+
+		// Generate front matter file
+		fmPath := filepath.Join(outputDir, file.Name()+".yaml")
+		if err := generateFrontMatterFile(fm, fmPath); err != nil {
+			return err
+		}
+
+		// Convert markdown to HTML
+		htmlContent := renderMarkdown(mdContent)
+
+		// Create a Page instance
+		page := &Page{
+			Title: fm.Title,
+			Body:  htmlContent,
+		}
+
+		// Generate HTML file for the page
+		htmlPath := filepath.Join(outputDir, file.Name()+".html")
+		if err := generateHTML(page, templatePath, htmlPath); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // renderMarkdown converts markdown content to HTML using Goldmark.
@@ -34,7 +122,7 @@ func renderMarkdown(content []byte) template.HTML {
 	return template.HTML(buf.String())
 }
 
-// generateHTML generates an HTML file for a page.
+// // generateHTML generates an HTML file for a page.
 func generateHTML(page *Page, templatePath, outputPath string) error {
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
@@ -55,44 +143,44 @@ func generateHTML(page *Page, templatePath, outputPath string) error {
 	return nil
 }
 
-// generateSite generates HTML files for all markdown files in the input directory.
-func generateSite(inputDir, outputDir, templatePath string) error {
-	// Read all markdown files from input directory
-	files, err := os.ReadDir(inputDir)
-	if err != nil {
-		return err
-	}
+// // generateSite generates HTML files for all markdown files in the input directory.
+// func generateSite(inputDir, outputDir, templatePath string) error {
+// 	// Read all markdown files from input directory
+// 	files, err := os.ReadDir(inputDir)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	for _, file := range files {
-		if file.IsDir() || filepath.Ext(file.Name()) != ".md" {
-			continue
-		}
+// 	for _, file := range files {
+// 		if file.IsDir() || filepath.Ext(file.Name()) != ".md" {
+// 			continue
+// 		}
 
-		// Read markdown content
-		mdPath := filepath.Join(inputDir, file.Name())
-		mdContent, err := os.ReadFile(mdPath)
-		if err != nil {
-			return err
-		}
+// 		// Read markdown content
+// 		mdPath := filepath.Join(inputDir, file.Name())
+// 		mdContent, err := os.ReadFile(mdPath)
+// 		if err != nil {
+// 			return err
+// 		}
 
-		// Convert markdown to HTML
-		htmlContent := renderMarkdown(mdContent)
+// 		// Convert markdown to HTML
+// 		htmlContent := renderMarkdown(mdContent)
 
-		// Create a Page instance
-		page := &Page{
-			Title: file.Name(),
-			Body:  htmlContent,
-		}
+// 		// Create a Page instance
+// 		page := &Page{
+// 			Title: file.Name(),
+// 			Body:  htmlContent,
+// 		}
 
-		// Generate HTML file for the page
-		htmlPath := filepath.Join(outputDir, file.Name()+".html")
-		if err := generateHTML(page, templatePath, htmlPath); err != nil {
-			return err
-		}
-	}
+// 		// Generate HTML file for the page
+// 		htmlPath := filepath.Join(outputDir, file.Name()+".html")
+// 		if err := generateHTML(page, templatePath, htmlPath); err != nil {
+// 			return err
+// 		}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func Create() {
 	inputDir := "content"

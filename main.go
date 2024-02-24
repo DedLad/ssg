@@ -131,8 +131,8 @@ func main() {
 
 	// Start HTTP server
 	port := ":8080"
-	fmt.Printf("Starting server on port %s...\n", port)
+	fmt.Printf("ping pong ur server is here/n", port)
 	if err := http.ListenAndServe(port, nil); err != nil {
-		log.Fatalf("Error starting server: %v", err)
+		log.Fatalf("issues fr: %v", err)
 	}
 }

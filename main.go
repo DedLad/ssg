@@ -47,7 +47,7 @@ func generateHTML(page *Page, templatePath, outputPath string) error {
 
 	html := buf.Bytes()
 
-	if err := ioutil.WriteFile(outputPath, html, 0644); err != nil {
+	if err := os.WriteFile(outputPath, html, 0644); err != nil {
 		return err
 	}
 
@@ -57,7 +57,7 @@ func generateHTML(page *Page, templatePath, outputPath string) error {
 // generateSite generates HTML files for all markdown files in the input directory.
 func generateSite(inputDir, outputDir, templatePath string) error {
 	// Read all markdown files from input directory
-	files, err := ioutil.ReadDir(inputDir)
+	files, err := os.ReadDir(inputDir)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func main() {
 
 	// Start HTTP server
 	port := ":8080"
-	fmt.Printf("ping pong ur server is here/n", port)
+	fmt.Println("ping pong ur server is here/n", port)
 	if err := http.ListenAndServe(port, nil); err != nil {
 		log.Fatalf("issues fr: %v", err)
 	}

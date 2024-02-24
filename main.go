@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 
 	// "io/ioutil"
 	"log"
@@ -46,7 +45,7 @@ func generateFrontMatterFile(fm *FrontMatter, outputPath string) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(outputPath, data, 0644)
+	err = os.WriteFile(outputPath, data, 0644)
 	if err != nil {
 		return err
 	}
@@ -56,7 +55,7 @@ func generateFrontMatterFile(fm *FrontMatter, outputPath string) error {
 // generateSite generates HTML files for all markdown files in the input directory.
 func generateSite(inputDir, outputDir, templatePath string) error {
 	// Read all markdown files from input directory
-	files, err := ioutil.ReadDir(inputDir)
+	files, err := os.ReadDir(inputDir)
 	if err != nil {
 		return err
 	}
@@ -68,7 +67,7 @@ func generateSite(inputDir, outputDir, templatePath string) error {
 
 		// Read markdown content
 		mdPath := filepath.Join(inputDir, file.Name())
-		mdContent, err := ioutil.ReadFile(mdPath)
+		mdContent, err := os.ReadFile(mdPath)
 		if err != nil {
 			return err
 		}
